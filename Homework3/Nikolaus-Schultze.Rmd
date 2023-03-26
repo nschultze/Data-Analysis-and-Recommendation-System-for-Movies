@@ -1,0 +1,140 @@
+---
+title: "CS 422"
+author: "Nikolaus Schultze, Illinois Institute of Technology"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+<!-- More information in R Markdown can be found at:
+1. https://www.ssc.wisc.edu/sscc/pubs/RFR/RFR_RMarkdown.html  This is 
+   the place to start since it is a short tutorial.
+2. https://rmarkdown.rstudio.com/index.html This contains a longer 
+   tutorial.  Take a look at the cheatsheet in 
+   https://rmarkdown.rstudio.com/lesson-15.html, it is a concise 
+   reference of R Markdown on two pages.
+<-->
+
+## Use this as a template for your homeworks.
+#### Rename it to firstname-lastname.Rmd.
+#### Run all the chunks by clicking on "Run" at the top right of the edit 
+#### window and choose "Run All".  Assuming there were no errors in the
+#### chunk, you should see a "Preview" button become visible on the top
+#### left of the edit window.  Click this button and a html document should
+#### pop up with the output from this R markdown script.
+install.packages("ISLR")
+
+
+### Part 2.1-A
+```{r}
+library(ISLR)
+set.seed(1122)
+index = sample(1:nrow(Auto), 0.95*dim(Auto)[1])
+train.df = Auto[index, c(1, 2, 3, 4, 5, 6, 7, 8)]
+test.df = Auto[-index, ]
+#test.df
+#train.df
+#plot(train.df)
+summary(train.df)
+```
+
+### Part 2.1-A(i)
+Using a name as a predictor is not a reasonable thing to do because the name of the vehicle doesn't have any correlation to miles per gallon of a car You can change the name of the car, but if specific features such as Weight and Horsepower do not change, the miles per gallon will not change.
+
+### Part 2.1-A(ii)
+```{r}
+linear_mod = lm(train.df)
+summary(linear_mod)
+RSS = c(crossprod(linear_mod$residuals))
+MSE = RSS / length(linear_mod$residuals)
+RMSE = sqrt(MSE)
+#print(paste0("R-Squared is ", summary(linear_mod)$r.squared))
+#print(paste0("RSE is ", summary(linear_mod)$sigma))
+#print(paste0("RSME is ", RMSE))
+```
+R-Squared is 0.82.RSE is 3.37. RSME is 3.33 The model fits the data fairly well although not perfect. The Multiple R-squared=0.812 and the Adjusted R-squared=0.83, this shows us the the model fits the data however if these values were closer to 1, they would be better.
+
+### Part 2.1-A(iii)
+```{r}
+plot(linear_mod, 1)
+```
+
+### Part 2.1-A(iv)
+```{r}
+hist(linear_mod$residuals)
+```
+
+The Histogram follows a Gaussian Distribution. The distribution of the residuals is almost symmetric, with a majority of the residuals located close to 0.
+
+### Part 2.1-B(i)
+Year, Weight, and Origin are statistically significant. Acceleration, Horsepower, Cylinders, and Displacement are not statistically significant
+
+### Part 2.1-B(ii)
+```{r}
+new_linear_mod = lm(mpg~weight + year + origin, train.df)
+summary(new_linear_mod)
+RSS = c(crossprod(new_linear_mod$residuals))
+MSE = RSS / length(new_linear_mod$residuals)
+RMSE = sqrt(MSE)
+#print(paste0("R-Squared is ", summary(new_linear_mod)$r.squared))
+#print(paste0("RSE is ", summary(new_linear_mod)$sigma))
+#print(paste0("RSME is ", RMSE))
+```
+R-Squared is 0.81. RSE is 3.39. RSME is 3.37. The model fits the data fairly well although not perfect. The Multiple R-squared=0.81 and the Adjusted R-squared=0.83, this shows us the the model fits the data well, however, it is slightly worse than the model we created in A(ii).
+
+### Part 2.1-B(iii)
+```{r}
+plot(new_linear_mod, 1)
+```
+
+### Part 2.1-B(iv)
+```{r}
+hist(new_linear_mod$residuals)
+```
+
+The Histogram does follow a Gaussian Distribution. The distribution of the residuals is fairly symmetric however not as symmetric as the Histogram we created in A(iv). The majority of the residuals are located close to 0.
+
+### Part 2.1-B(v)
+Model A is better, we can see this because B's Multiple R-Squared=0.3868 and Adjusted R-Sqaure=0.3835, whereas A's Multiple R-Squared=0.817 and Adjusted R-Squared=0.8135.If the models were perfect, the R-squared values would be 1, so because Model A's values are closer to 1, that means that Model A is the better model. A's R2 value was higher which is good as the closer to 1, the better. A's RSE and RSME were also lower in comparison to B's which is good because the closer to 0 RSE and RSME are, the better.
+
+### Part 2.1-C
+```{r}
+model = lm(formula = mpg ~ weight + year + origin, data = test.df)
+res = predict(model, interval = "confidence", level = 0.95)
+#res
+prediction = data.frame(Predictions = res[,1], Response = test.df$mpg)
+prediction
+```
+
+### Part 2.1-D
+```{r}
+lower_upper_response = cbind(res, prediction)
+#lower_upper_response
+matches = apply(lower_upper_response, 1, function(x) x[2] < x[5] & x[5] < x[3])
+matches_complete = as.integer(matches)
+#matches_complete
+lower_upper_response_matches =cbind(prediction, res[,c(2:3)], Matches = matches_complete)
+lower_upper_response_matches
+```
+
+### Part 2.1-E
+```{r}
+res2 = predict(model, interval = "prediction", level = 0.95)
+lower_upper_response2 = cbind(res2, prediction)
+#lower_upper_response2
+matches2 = apply(lower_upper_response2, 1, function(x) x[2] < x[5] & x[5] < x[3])
+matches_complete2 = as.integer(matches2)
+#matches_complete2
+lower_upper_response_matches2 = cbind(prediction, res2[,c(2:3)], Matches = matches_complete2)
+lower_upper_response_matches2
+```
+
+### Part 2.1-F(i)
+B results in more matches
+
+### Part 2.1-F(ii)
+This is because we change the range, our Lower bound becomes even lower and our Upper bound becomes even higher. Because this range is increased, there is more of a probability that the Response is within this increased range size.

@@ -1,0 +1,169 @@
+---
+title: "CS 422"
+author: "Nikolaus Schultze, Illinois Institute of Technology"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+<!-- More information in R Markdown can be found at:
+1. https://www.ssc.wisc.edu/sscc/pubs/RFR/RFR_RMarkdown.html  This is 
+   the place to start since it is a short tutorial.
+2. https://rmarkdown.rstudio.com/index.html This contains a longer 
+   tutorial.  Take a look at the cheatsheet in 
+   https://rmarkdown.rstudio.com/lesson-15.html, it is a concise 
+   reference of R Markdown on two pages.
+<-->
+
+## Use this as a template for your homeworks.
+#### Rename it to firstname-lastname.Rmd.
+#### Run all the chunks by clicking on "Run" at the top right of the edit 
+#### window and choose "Run All".  Assuming there were no errors in the
+#### chunk, you should see a "Preview" button become visible on the top
+#### left of the edit window.  Click this button and a html document should
+#### pop up with the output from this R markdown script.
+
+### Part 2.1-A
+```{r}
+library(cluster)
+library(cluster.datasets)
+library(factoextra)
+file19 = read.table("https://people.sc.fsu.edu/~jburkardt/datasets/hartigan/file19.txt", header = TRUE, skip = 20)
+file19
+#file = read.delim2("https://people.sc.fsu.edu/~jburkardt/datasets/hartigan/file19.txt", skip = 20,  sep = "\t", dec = ",")
+#file
+```
+
+### Part 2.1-A(i)
+```{r}
+print("I did not remove any attributes before clustering.")
+```
+
+### Part 2.1-A(ii)
+```{r}
+print("This data does not need to be standardized as standardization eliminates outliers, however, this data doesn't appear to have significant outlier and every point belongs to a cluster.")
+```
+
+### Part 2.1-A(iii)
+```{r}
+new_file19 = na.omit(file19[,c(2:9)])
+new_file19
+k = kmeans(new_file19, centers = 8, nstart = 25)
+```
+
+### Part 2.1-B(i)
+```{r}
+fviz_nbclust(new_file19, kmeans, method = "wss")
+fviz_nbclust(new_file19, kmeans, method = "silhouette")
+```
+
+### Part 2.1-B(ii)
+```{r}
+fviz_cluster(kmeans(new_file19, centers = 8, nstart=25), data = new_file19)
+```
+
+### Part 2.1-B(iii)
+```{r}
+#observations in each cluster
+observations = k$cluster
+observations = table(observations)
+observations
+```
+
+### Part 2.1-B(iv)
+```{r}
+sse = k$totss
+round(sse, digits = 2)
+```
+
+### Part 2.1-B(v)
+```{r}
+sses = k$withinss
+round(sses, digits = 2)
+```
+
+### Part 2.1-B(vi)
+```{r}
+print("Cluster 1:")
+file19[which(k$cluster == 1) ,c(1)]
+print("Cluster 2:")
+file19[which(k$cluster == 2) ,c(1)]
+print("Cluster 3:")
+file19[which(k$cluster == 3) ,c(1)]
+print("Cluster 4:")
+file19[which(k$cluster == 4) ,c(1)]
+print("Cluster 5:")
+file19[which(k$cluster == 5) ,c(1)]
+print("Cluster 6:")
+file19[which(k$cluster == 6) ,c(1)]
+print("Cluster 7:")
+file19[which(k$cluster == 7) ,c(1)]
+print("Cluster 8:")
+file19[which(k$cluster == 8) ,c(1)]
+print("It looks the mammals for the same species and similar species were grouped together. This can be seen in one cluster  with multiple rats and a mouse being grouped together or another cluster where Elk, Deer, and Moose are grouped together. For me, it appears that this group is correct as a majority of the mammals were put in groups with those from the same or similar species.")
+```
+
+### Part 2.2
+```{r}
+s1 = read.csv(file = '.\\s1.csv')
+s1
+```
+
+### Part 2.2-A
+```{r}
+print("This data does not need to be standardized as standardization eliminates outliers, however, this data doesn't appear to have significant outlier and every point belongs to a cluster. Standardizing this data might make the eps lower however it is not necessary.")
+```
+
+### Part 2.2-B
+```{r}
+plot(s1)
+```
+
+### Part 2.2-B(ii)
+```{r}
+print("I see 15 clusters. Some of the clusters are well seperated, however, a few clusters are relatively close together.")
+```
+
+### Part 2.2-C(i)
+```{r}
+fviz_nbclust(s1, kmeans, method = "wss")
+```
+
+### Part 2.2-C(ii)
+```{r}
+fviz_nbclust(s1, kmeans, method = "silhouette")
+```
+
+### Part 2.2-C(iii)
+```{r}
+print("I think the appropriate number of clusters would be 15 if we were to use K-Means clustering on this dataset.")
+```
+
+### Part 2.2-D
+```{r}
+k = kmeans(s1, centers = 15, nstart = 25)
+fviz_cluster(kmeans(s1, centers = 15, nstart=25), data = s1)
+```
+
+### Part 2.2-D(ii)
+```{r}
+print("The Kmeans clustering is similar to the visual clustering I did myself, if not the same.")
+```
+
+### Part 2.2-E(i)
+```{r}
+print("The minPts required should be 5. This is because the data set we are given only has 2 columns so it isn't very complex and 5 is the default minPts.")
+```
+
+### Part 2.2-E(ii)
+```{r}
+library(dbscan)
+kNNdistplot(s1, 5, all = FALSE)
+scanned_file = dbscan(s1, eps = 20500, minPts = 5)
+scanned_file
+print("At minPts = 5, eps = 20500, there are 15 clusters.")
+```

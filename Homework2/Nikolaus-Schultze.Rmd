@@ -1,0 +1,91 @@
+---
+title: "CS 422"
+author: "Nikolaus Schultze, Illinois Institute of Technology"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+<!-- More information in R Markdown can be found at:
+1. https://www.ssc.wisc.edu/sscc/pubs/RFR/RFR_RMarkdown.html  This is 
+   the place to start since it is a short tutorial.
+2. https://rmarkdown.rstudio.com/index.html This contains a longer 
+   tutorial.  Take a look at the cheatsheet in 
+   https://rmarkdown.rstudio.com/lesson-15.html, it is a concise 
+   reference of R Markdown on two pages.
+<-->
+
+## Use this as a template for your homeworks.
+#### Rename it to firstname-lastname.Rmd.
+#### Run all the chunks by clicking on "Run" at the top right of the edit 
+#### window and choose "Run All".  Assuming there were no errors in the
+#### chunk, you should see a "Preview" button become visible on the top
+#### left of the edit window.  Click this button and a html document should
+#### pop up with the output from this R markdown script.
+
+install.packages("psych")
+
+### Part 2.1-A
+```{r}
+covid_deaths = read.csv(file = '.\\us-covid-deaths.csv')
+c_deaths = covid_deaths[complete.cases(covid_deaths), ]
+setwd("~/RTut")
+c_deaths[1:6, ]
+
+```
+
+### Part 2.1-B
+```{r}
+library(psych)
+dataframe_c_deaths = c_deaths[,c(2, 1, 3, 4, 5, 6, 7, 8)]
+pairs.panels(dataframe_c_deaths)
+```
+
+### Part 2.1-B(i)
+```{r}
+print("The response variable (total_deaths) has the highest positive correlation with total tests. The correlation coefficient is .99.")
+```
+
+### Part 2.1-B(ii)
+```{r}
+print("The response variable (total_deaths) has the highest negative correlation with Stringency Index. The correlation coefficient is -.66.")
+```
+
+### Part 2.1-B(iii)
+```{r}
+print("The correlation in (i) I believe isn't really correlation or causation, it's more that as time, the number of covid deaths went up and the number of total tests went up. There wasn't an increase in covid deaths because of a increase in covid tests. I don't believe there is a negative correlation between total deaths and stringency index, stringency index is the government's response to the pandemic with the higher the stringency index, the better the response which would help decrease the increase in deaths however and cannot remove deaths.")
+```
+
+### Part 2.1-C
+```{r}
+linear_mod = lm(c_deaths[,c(3, 4, 5, 6, 7, 8)])
+#plot(linear_mod)
+summary(linear_mod)
+```
+
+### Part 2.1-D
+```{r}
+print("I believe that this is a good linear regression model, this is because the closer the R-value is to 1, the better the model. In our model, we get the multiple r-squared to be 0.9881 and adjusted r-squared to be 0.988, these values are relatively close to 1, thus this is a good linear regression model.")
+```
+
+### Part 2.1-E
+```{r}
+print("Some predictors that are statistically significant are Hospital patients, Positive, Rate, and Reproduction Rate")
+```
+
+### Part 2.1-F
+```{r}
+print("Some predictors that aren't statistically significant are Stringency Index and Total Tets, these aren't statistically significant because ")
+```
+
+### Part 2.1-G
+```{r}
+new_linear_mod = lm(c_deaths[,c(3, 4, 5, 6, 8)])
+#plot(new_linear_mod)
+summary(new_linear_mod)
+print("This new model is slightly worse than the previous model created in D. This can be measured by the multiple r-squared to be 0.9876 and adjusted r-squared to be 0.9875 which is lower than the 0.9881 and 0.988 we got in the c model.")
+```

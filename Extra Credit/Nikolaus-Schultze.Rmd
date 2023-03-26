@@ -1,0 +1,372 @@
+---
+title: "CS 422"
+author: "Nikolaus Schultze, Illinois Institute of Technology"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+<!-- More information in R Markdown can be found at:
+1. https://www.ssc.wisc.edu/sscc/pubs/RFR/RFR_RMarkdown.html  This is 
+   the place to start since it is a short tutorial.
+2. https://rmarkdown.rstudio.com/index.html This contains a longer 
+   tutorial.  Take a look at the cheatsheet in 
+   https://rmarkdown.rstudio.com/lesson-15.html, it is a concise 
+   reference of R Markdown on two pages.
+<-->
+
+## Use this as a template for your homeworks.
+#### Rename it to firstname-lastname.Rmd.
+#### Run all the chunks by clicking on "Run" at the top right of the edit 
+#### window and choose "Run All".  Assuming there were no errors in the
+#### chunk, you should see a "Preview" button become visible on the top
+#### left of the edit window.  Click this button and a html document should
+#### pop up with the output from this R markdown script.
+
+### Part 2.1-A
+```{r}
+tr1ks_canonical = read.csv(file = '.\\tr-1k-canonical.csv', sep = '\t', header = FALSE)
+tr5ks_canonical = read.csv(file = '.\\tr-5k-canonical.csv', sep = '\t', header = FALSE)
+tr20ks_canonical = read.csv(file = '.\\tr-20k-canonical.csv', sep = '\t', header = FALSE)
+tr75ks_canonical = read.csv(file = '.\\tr-75k-canonical.csv', sep = '\t', header = FALSE)
+```
+
+### Part 2.1-B
+```{r}
+#install.packages("arules")
+#install.packages("arulesViz")
+library(arules)
+library(arulesViz)
+trans <- read.transactions("tr-1k-canonical.csv", sep=",")
+f_is <- apriori(trans, parameter=list(support=0.09, target="frequent itemsets"))
+inspect(sort(f_is, decreasing = T, by="count"))
+rm(f_is)
+rules <- apriori(trans, parameter = list(support=0.01))
+summary(rules)
+
+
+trans5k <- read.transactions("tr-5k-canonical.csv", sep=",")
+f_is5k <- apriori(trans5k, parameter=list(support=0.09, target="frequent itemsets"))
+inspect(sort(f_is5k, decreasing = T, by="count"))
+rm(f_is5k)
+rules5k <- apriori(trans5k, parameter = list(support=0.01))
+summary(rules5k)
+
+trans20k <- read.transactions("tr-20k-canonical.csv", sep=",")
+f_is20k <- apriori(trans20k, parameter=list(support=0.09, target="frequent itemsets"))
+inspect(sort(f_is20k, decreasing = T, by="count"))
+rm(f_is20k)
+rules20k <- apriori(trans20k, parameter = list(support=0.01))
+summary(rules20k)
+
+trans75k <- read.transactions("tr-75k-canonical.csv", sep=",")
+f_is75k <- apriori(trans75k, parameter=list(support=0.09, target="frequent itemsets"))
+inspect(sort(f_is75k, decreasing = T, by="count"))
+rm(f_is75k)
+rules75k <- apriori(trans75k, parameter = list(support=0.01))
+summary(rules75k)
+```
+
+### Part 2.1-C
+The number of transactions affect the results as the 1k had a set of 84 rules, the 5k had a set of 84 rules, the 20k had a set of 84 rules, but the 75k had a set of 85 rules.
+
+
+### Part 2.1-D(i)
+```{r}
+print("The most frequently purchased item or itemset is the Coffee Eclair")
+```
+
+### Part 2.1-D(ii)
+```{r}
+print("The least frequently purchased item or itemset is the Gongolais Cookie")
+```
+
+### Part 2.2
+```{r}
+library(tidyverse)
+#install.packages("lsa")
+library(lsa)
+#20442006 mod 671 = 662
+ratings = read.csv(file = '.\\ratings.csv')
+movies = read.csv(file = '.\\movies.csv')
+#ratings
+#movies
+randomMovies = sample(1:9125, 10)
+#randomMovies
+recommendedMovies = movies[c(randomMovies), c(1,2)]
+
+user = 1
+userMovies = ratings %>% filter(userId == user)
+userMoviesID = data.frame(userMovies[,c(2)])
+#userMoviesID
+numberOfMovies = length(userMovies$movieId)
+#numberOfMovies
+#userProfile = data.frame(userMovies$movieId)
+
+newMovies = data.frame(matrix(ncol = 3, nrow = 0))
+colnames(newMovies) = c("movieId", "title", "genres")
+i= 1
+repeat {
+  newMoviesTemp = movies %>% filter(movieId == userMoviesID[i,])
+  paste(newMoviesTemp)
+  newMovies = rbind(newMovies, newMoviesTemp)
+  i = i + 1
+  if(i == length(userMovies$movieId) + 1) {
+    break
+  }
+}
+#newMovies
+
+userProfile = data.frame(matrix(ncol = 21, nrow = 0))
+colnames(userProfile) = c("Movie ID", "Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western", "(no genres listed)")
+userProfileFinal = data.frame(matrix(ncol = 21, nrow = 0))
+colnames(userProfileFinal) = c("Movie ID", "Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western", "(no genres listed)")
+#userProfile
+j = 1
+repeat {
+  if(grepl("Action", newMovies$genres[j]))
+    (userProfile[1,1] = newMovies$movieId[j]) && (userProfile[1,2] = 1)
+  else
+    (userProfile[1,1] = newMovies$movieId[j]) && (userProfile[1,2] = 0)
+  if(grepl("Adventure", newMovies$genres[j]))
+    userProfile[1,3] = 1
+  else
+    userProfile[1,3] = 0
+  if(grepl("Animation", newMovies$genres[j]))
+    userProfile[1,4] = 1
+  else
+    userProfile[1,4] = 0
+  if(grepl("Children", newMovies$genres[j]))
+    userProfile[1,5] = 1
+  else
+    userProfile[1,5] = 0
+  if(grepl("Comedy", newMovies$genres[j]))
+    userProfile[1,6] = 1
+  else
+    userProfile[1,6] = 0
+  if(grepl("Crime", newMovies$genres[j]))
+    userProfile[1,7] = 1
+  else
+    userProfile[1,7] = 0
+  if(grepl("Documentary", newMovies$genres[j]))
+    userProfile[1,8] = 1
+  else
+    userProfile[1,8] = 0
+  if(grepl("Drama", newMovies$genres[j]))
+    userProfile[1,9] = 1
+  else
+    userProfile[1,9] = 0
+  if(grepl("Fantasy", newMovies$genres[j]))
+    userProfile[1,10] = 1
+  else
+    userProfile[1,10] = 0
+  if(grepl("Film-Noir", newMovies$genres[j]))
+    userProfile[1,11] = 1
+  else
+    userProfile[1,11] = 0
+  if(grepl("Horror", newMovies$genres[j]))
+    userProfile[1,12] = 1
+  else
+    userProfile[1,12] = 0
+  if(grepl("IMAX", newMovies$genres[j]))
+    userProfile[1,13] = 1
+  else
+    userProfile[1,13] = 0
+  if(grepl("Musical", newMovies$genres[j]))
+    userProfile[1,14] = 1
+  else
+    userProfile[1,14] = 0
+  if(grepl("Mystery", newMovies$genres[j]))
+    userProfile[1,15] = 1
+  else
+    userProfile[1,15] = 0
+  if(grepl("Romance", newMovies$genres[j]))
+    userProfile[1,16] = 1
+  else
+    userProfile[1,16] = 0
+  if(grepl("Sci-Fi", newMovies$genres[j]))
+    userProfile[1,17] = 1
+  else
+    userProfile[1,17] = 0
+  if(grepl("Thriller", newMovies$genres[j]))
+    userProfile[1,18] = 1
+  else
+    userProfile[1,18] = 0
+  if(grepl("War", newMovies$genres[j]))
+    userProfile[1,19] = 1
+  else
+    userProfile[1,19] = 0
+  if(grepl("Western", newMovies$genres[j]))
+    userProfile[1,20] = 1
+  else
+    userProfile[1,20] = 0
+  if(grepl("(no genres listed)", newMovies$genres[j]))
+    userProfile[1,21] = 1
+  else
+    userProfile[1,21] = 0
+  userProfileFinal = rbind(userProfileFinal, userProfile)
+  j = j + 1
+  if(j == length(userMovies$movieId) + 1) {
+    break
+  }
+}
+#userProfileFinal
+
+avgAction = sum(userProfileFinal$Action) / length(userMovies$movieId)
+avgAdventure = sum(userProfileFinal$Adventure) / length(userMovies$movieId)
+avgAnimation = sum(userProfileFinal$Animation) / length(userMovies$movieId)
+avgChildren = sum(userProfileFinal$Children) / length(userMovies$movieId)
+avgComedy = sum(userProfileFinal$Comedy) / length(userMovies$movieId)
+avgCrime = sum(userProfileFinal$Crime) / length(userMovies$movieId)
+avgDocumentary = sum(userProfileFinal$Documentary) / length(userMovies$movieId)
+avgDrama = sum(userProfileFinal$Drama) / length(userMovies$movieId)
+avgFantasy = sum(userProfileFinal$Fantasy) / length(userMovies$movieId)
+avgFilmNoir = sum(userProfileFinal$`Film-Noir`) / length(userMovies$movieId)
+avgHorror = sum(userProfileFinal$Horror) / length(userMovies$movieId)
+avgIMAX = sum(userProfileFinal$IMAX) / length(userMovies$movieId)
+avgMusical = sum(userProfileFinal$Musical) / length(userMovies$movieId)
+avgMystery = sum(userProfileFinal$Mystery) / length(userMovies$movieId)
+avgRomance = sum(userProfileFinal$Romance) / length(userMovies$movieId)
+avgSciFi = sum(userProfileFinal$`Sci-Fi`) / length(userMovies$movieId)
+avgThriller = sum(userProfileFinal$Thriller) / length(userMovies$movieId)
+avgWar = sum(userProfileFinal$War) / length(userMovies$movieId)
+avgWestern = sum(userProfileFinal$Western) / length(userMovies$movieId)
+avgNoGenre = sum(userProfileFinal$`(no genres listed)`) / length(userMovies$movieId)
+avg = c("AVG", avgAction, avgAdventure, avgAnimation, avgChildren, avgComedy, avgCrime, avgDocumentary, avgDrama, avgFantasy, avgFilmNoir, avgHorror, avgIMAX, avgMusical, avgMystery, avgRomance, avgSciFi, avgThriller, avgWar, avgWestern, avgNoGenre)
+#avg
+
+userProfileVector = c(avgAction, avgAdventure, avgAnimation, avgChildren, avgComedy, avgCrime, avgDocumentary, avgDrama, avgFantasy, avgFilmNoir, avgHorror, avgIMAX, avgMusical, avgMystery, avgRomance, avgSciFi, avgThriller, avgWar, avgWestern, avgNoGenre)
+
+userProfileFinal = rbind(userProfileFinal, avg)
+#userProfileFinal
+
+movieProfile = data.frame(matrix(ncol = 20, nrow = 0))
+colnames(movieProfile) = c("Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western", "(no genres listed)")
+movieProfileFinal = data.frame(matrix(ncol = 20, nrow = 0))
+colnames(movieProfileFinal) = c("Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western", "(no genres listed)")
+k = randomMovies
+j = 1
+repeat {
+  if(grepl("Action", movies$genres[k[j]]))
+    movieProfile[1,1] = 1
+  else
+    movieProfile[1,1] = 0
+  if(grepl("Adventure", movies$genres[k[j]]))
+    movieProfile[1,2] = 1
+  else
+    movieProfile[1,2] = 0
+  if(grepl("Animation", movies$genres[k[j]]))
+    movieProfile[1,3] = 1
+  else
+    movieProfile[1,3] = 0
+  if(grepl("Children", movies$genres[k[j]]))
+    movieProfile[1,4] = 1
+  else
+    movieProfile[1,4] = 0
+  if(grepl("Comedy", movies$genres[k[j]]))
+    movieProfile[1,5] = 1
+  else
+    movieProfile[1,5] = 0
+  if(grepl("Crime", movies$genres[k[j]]))
+    movieProfile[1,6] = 1
+  else
+    movieProfile[1,6] = 0
+  if(grepl("Documentary", movies$genres[k[j]]))
+    movieProfile[1,7] = 1
+  else
+    movieProfile[1,7] = 0
+  if(grepl("Drama", movies$genres[k[j]]))
+    movieProfile[1,8] = 1
+  else
+    movieProfile[1,8] = 0
+  if(grepl("Fantasy", movies$genres[k[j]]))
+    movieProfile[1,9] = 1
+  else
+    movieProfile[1,9] = 0
+  if(grepl("Film-Noir", movies$genres[k[j]]))
+    movieProfile[1,10] = 1
+  else
+    movieProfile[1,10] = 0
+  if(grepl("Horror", movies$genres[k[j]]))
+    movieProfile[1,11] = 1
+  else
+    movieProfile[1,11] = 0
+  if(grepl("IMAX", movies$genres[k[j]]))
+    movieProfile[1,12] = 1
+  else
+    movieProfile[1,12] = 0
+  if(grepl("Musical", movies$genres[k[j]]))
+    movieProfile[1,13] = 1
+  else
+    movieProfile[1,13] = 0
+  if(grepl("Mystery", movies$genres[k[j]]))
+    movieProfile[1,14] = 1
+  else
+    movieProfile[1,14] = 0
+  if(grepl("Romance", movies$genres[k[j]]))
+    movieProfile[1,15] = 1
+  else
+    movieProfile[1,15] = 0
+  if(grepl("Sci-Fi", movies$genres[k[j]]))
+    movieProfile[1,16] = 1
+  else
+    movieProfile[1,16] = 0
+  if(grepl("Thriller", movies$genres[k[j]]))
+    movieProfile[1,17] = 1
+  else
+    movieProfile[1,17] = 0
+  if(grepl("War", movies$genres[k[j]]))
+    movieProfile[1,18] = 1
+  else
+    movieProfile[1,18] = 0
+  if(grepl("Western", movies$genres[k[j]]))
+    movieProfile[1,19] = 1
+  else
+    movieProfile[1,19] = 0
+  if(grepl("(no genres listed)", movies$genres[k[j]]))
+    movieProfile[1,20] = 1
+  else
+    movieProfile[1,20] = 0
+  movieProfileFinal = rbind(movieProfileFinal, movieProfile)
+  j = j + 1
+  if(j == 10) {
+    break
+  }
+}
+#movieProfileFinal
+
+movieOne =  as.vector(t(movieProfileFinal[1,]))
+movieTwo = as.vector(t(movieProfileFinal[2,]))
+movieThree = as.vector(t(movieProfileFinal[3,]))
+movieFour = as.vector(t(movieProfileFinal[4,]))
+movieFive = as.vector(t(movieProfileFinal[5,]))
+movieSix = as.vector(t(movieProfileFinal[6,]))
+movieSeven = as.vector(t(movieProfileFinal[7,]))
+movieEight = as.vector(t(movieProfileFinal[8,]))
+movieNine = as.vector(t(movieProfileFinal[9,]))
+movieTen = as.vector(t(movieProfileFinal[10,]))
+
+sim1 = round(cosine(userProfileVector, movieOne), digits = 3)
+sim2 = round(cosine(userProfileVector, movieTwo), digits = 3)
+sim3 = round(cosine(userProfileVector, movieThree), digits = 3)
+sim4 = round(cosine(userProfileVector, movieFour), digits = 3)
+sim5 = round(cosine(userProfileVector, movieFive), digits = 3)
+sim6 = round(cosine(userProfileVector, movieSix), digits = 3)
+sim7 = round(cosine(userProfileVector, movieSeven), digits = 3)
+sim8 = round(cosine(userProfileVector, movieEight), digits = 3)
+sim9 = round(cosine(userProfileVector, movieNine), digits = 3)
+sim10 = round(cosine(userProfileVector, movieTen), digits = 3)
+
+recommendedMovies$Similarity = c(sim1, sim2, sim3, sim4, sim5, sim6, sim7, sim8, sim9, sim10)
+recommendedMovies = recommendedMovies[order(-recommendedMovies$Similarity),]
+recommendedMoviesFinal = recommendedMovies[c(1:5),]
+
+print("User 662 chose the following 10 movies: ")
+paste0(randomMovies, sep = ',', collapse = ' ')
+print("Of these, the following 5 movies are recommended:")
+recommendedMoviesFinal
+```

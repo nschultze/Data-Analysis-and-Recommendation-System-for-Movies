@@ -1,0 +1,89 @@
+---
+title: "CS 422"
+author: "Nikolaus Schultze, Illinois Institute of Technology"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+<!-- More information in R Markdown can be found at:
+1. https://www.ssc.wisc.edu/sscc/pubs/RFR/RFR_RMarkdown.html  This is 
+   the place to start since it is a short tutorial.
+2. https://rmarkdown.rstudio.com/index.html This contains a longer 
+   tutorial.  Take a look at the cheatsheet in 
+   https://rmarkdown.rstudio.com/lesson-15.html, it is a concise 
+   reference of R Markdown on two pages.
+<-->
+
+## Use this as a template for your homeworks.
+#### Rename it to firstname-lastname.Rmd.
+#### Run all the chunks by clicking on "Run" at the top right of the edit 
+#### window and choose "Run All".  Assuming there were no errors in the
+#### chunk, you should see a "Preview" button become visible on the top
+#### left of the edit window.  Click this button and a html document should
+#### pop up with the output from this R markdown script.
+
+#install.packages("rpart")
+#install.packages("rpart.plot")
+#install.packages("psych")
+library(rpart)
+library(rpart.plot)
+library(psych)
+#install.packages("caret")
+library(caret)
+#install.packages("caTools")
+library(caTools)
+#install.packages("randomForest")
+library(randomForest)
+
+### Part 2.1-A
+```{r}
+hotel_bookings = read.csv(file = '.\\hotel_bookings.csv')
+setwd("~/RTut")
+#hotel_bookings
+hotel_type = data.frame(table(hotel_bookings$hotel))
+
+set.seed(1122)
+sample = sample(1:nrow(hotel_bookings), .90 * dim(hotel_bookings)[1])
+train = hotel_bookings[sample,]
+test = hotel_bookings[-sample,]
+#train
+#test
+decision_tree_cp_0 = rpart(is_canceled ~ deposit_type + lead_time + previous_cancellations + market_segment + total_of_special_requests + required_car_parking_spaces, data = train, method = 'class', cp = 0)
+predicted_decision_tree_cp_0 = predict(decision_tree_cp_0, test, type = 'class')
+confusion_matrix = confusionMatrix(predicted_decision_tree_cp_0, factor(test$is_canceled))
+#confusion_matrix
+
+for(a in c(250, 500, 750)) {
+  for(b in c(floor(sqrt(6)), floor(sqrt(6) + 1), floor(sqrt(6) + 2))) {
+    forest = randomForest(factor(is_canceled) ~ deposit_type + lead_time + previous_cancellations + market_segment + total_of_special_requests + required_car_parking_spaces, data = train, ntree = a, mtry = b)
+    
+    predicted = predict(forest, test, type = 'class')
+    confusion_matrix = confusionMatrix(predicted, factor(test$is_canceled))
+    print(confusion_matrix)
+    oob_error = mean(forest$err.rate[,1])
+    print(oob_error)
+  }
+}
+```
+### Part 2.1-A(i)
+```{r}
+print(paste0("Grid search resulted in the best model at ntree = 500 and mtry = sqrt(6) + 2."))
+print(paste0("Accuracy = .8107"))
+print(paste0("Balanced Accuracy = .7751"))
+print(paste0("Sensitivity = .9148"))
+print(paste0("Specificity = .6353"))
+```
+
+### Part 2.1-A(ii)
+```{r}
+print(paste0("Grid search resulted in the best model at ntree = 750 and mtry = sqrt(6) + 2."))
+print(paste0("OOB = 0.189214"))
+```
+
+### Part 2.1-A(iii)
+The model determined by a is not the same as the model determined by b. Balanced Accuracy is calculated using the predicted classes. OOB is calculated based off the accuracy of the Random Forest. These could potentially choose the same model, however, in this case, this is not reality and two different models are chosen.

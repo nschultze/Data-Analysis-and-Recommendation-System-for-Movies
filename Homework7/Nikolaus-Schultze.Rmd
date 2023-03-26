@@ -1,0 +1,257 @@
+---
+title: "Homework 7"
+author: "Nikolaus Schultze, Illinois Institute of Technology"
+output:
+  html_document:
+    df_print: paged
+  toc: yes
+  toc_float: yes
+  html_notebook: null
+---
+###Given Code
+```{r}
+#install.packages("keras")
+#install.packages("dplyr")
+#install.packages("caret")
+library(keras)
+library(dplyr)
+library(caret)
+
+rm(list=ls())
+
+# Set working directory as needed
+setwd("~/RTut")
+
+df = read.csv("activity-small.csv")
+
+# Seed the PRNG
+set.seed(1122)
+df = df[sample(nrow(df)), ] # Shuffle, as all of the data in the .csv file
+                             # is ordered by label!  This will cause problems
+                             # if we do not shuffle as the validation split
+                             # may not include observations of class 3 (the
+                             # class that occurs at the end).  The validation_
+                             # split parameter samples from the end of the
+                             # training set.
+
+# Scale the dataset.  Copy this block of code as is and use it; we will get
+# into the detail of why we scale.  We will scale our dataset so all of the
+# predictors have a mean of 0 and standard deviation of 1.  Scale test and
+# training splits independently!
+
+indx <- sample(1:nrow(df), 0.20*nrow(df))
+test.df  <- df[indx, ]
+train.df <- df[-indx, ]
+
+label.test <- test.df$label
+test.df$label <- NULL
+test.df <- as.data.frame(scale(test.df))
+test.df$label <- label.test
+rm(label.test)
+
+label.train <- train.df$label
+train.df$label <- NULL
+train.df <- as.data.frame(scale(train.df))
+train.df$label <- label.train
+rm(label.train)
+rm(indx)
+```
+# --- Your code goes below ---
+
+### Part 2.1-A
+```{r}
+x_train = select(train.df, -label)
+x_test = select(test.df, -label)
+
+y_train = train.df$label
+y_test = test.df$label
+
+y_train.ohe = to_categorical(y_train)
+y_test.ohe = to_categorical(test.df$label)
+
+create_model = function() {
+
+  model = keras_model_sequential() %>%
+    layer_dense(units = 8, activation="relu", input_shape=c(3)) %>%
+    layer_dense(units = 4, activation="softmax")
+
+  model %>% 
+    compile(loss = "categorical_crossentropy", 
+            optimizer = "adam", 
+            metrics = c("accuracy"))
+
+  return(model)
+}
+
+model = create_model()
+
+model %>% fit(
+  data.matrix(x_train), 
+  y_train.ohe,
+  epochs = 100,
+  batch_size = 1,
+  validation_split = 0.20,
+  verbose = 0
+)
+
+model %>% evaluate(as.matrix(x_test), y_test.ohe)
+predicted_probability = predict(model, as.matrix(x_test))
+predicted_class = apply(predicted_probability, 1, function(x) which.max(x)-1)
+confusion_matrix = confusionMatrix(as.factor(predicted_class), as.factor(y_test))
+confusion_matrix
+
+accuracy = round(confusion_matrix$overall['Accuracy'], digits = 2)
+sensitivity0 = round(confusion_matrix$byClass['Class: 0', 'Sensitivity'], digits = 2)
+specificity0 = round(confusion_matrix$byClass['Class: 0', 'Specificity'], digits = 2)
+balanced_accuracy0 = round(confusion_matrix$byClass['Class: 0', 'Balanced Accuracy'], digits = 2)
+
+sensitivity1 = round(confusion_matrix$byClass['Class: 1', 'Sensitivity'], digits = 2)
+specificity1 = round(confusion_matrix$byClass['Class: 1', 'Specificity'], digits = 2)
+balanced_accuracy1 = round(confusion_matrix$byClass['Class: 1', 'Balanced Accuracy'], digits = 2)
+
+sensitivity2 = round(confusion_matrix$byClass['Class: 2', 'Sensitivity'], digits = 2)
+specificity2 = round(confusion_matrix$byClass['Class: 2', 'Specificity'], digits = 2)
+balanced_accuracy2 = round(confusion_matrix$byClass['Class: 2', 'Balanced Accuracy'], digits = 2)
+
+sensitivity3 = round(confusion_matrix$byClass['Class: 3', 'Sensitivity'], digits = 2)
+specificity3 = round(confusion_matrix$byClass['Class: 3', 'Specificity'], digits = 2)
+balanced_accuracy3 = round(confusion_matrix$byClass['Class: 3', 'Balanced Accuracy'], digits = 2)
+
+print("Batch gradient descent")
+print(paste0("Overall accuarcy: ", accuracy))
+print(paste0("Class 0: Sens. = ", sensitivity0, " Spec. = ", specificity0, " Bal.Acc. = ", balanced_accuracy0))
+print(paste0("Class 1: Sens. = ", sensitivity1, " Spec. = ", specificity1, " Bal.Acc. = ", balanced_accuracy1))
+print(paste0("Class 2: Sens. = ", sensitivity2, " Spec. = ", specificity2, " Bal.Acc. = ", balanced_accuracy2))
+print(paste0("Class 3: Sens. = ", sensitivity3, " Spec. = ", specificity3, " Bal.Acc. = ", balanced_accuracy3))
+```
+
+### Part 2.1-B
+```{r}
+model = create_model()
+
+for(n in c(1, 32, 64, 128, 256)) {
+  start = Sys.time()
+  model %>% fit(
+    data.matrix(x_train), 
+    y_train.ohe,
+    epochs = 100,
+    batch_size = n,
+    validation_split = 0.20,
+    verbose = 0
+  )
+  end = Sys.time()
+  time =round((end - start), digits = 2)
+  model %>% evaluate(as.matrix(x_test), y_test.ohe)
+  predicted_probability = predict(model, as.matrix(x_test))
+  predicted_class = apply(predicted_probability, 1, function(x) which.max(x)-1)
+  confusion_matrix = confusionMatrix(as.factor(predicted_class), as.factor(y_test))
+  confusion_matrix
+
+  accuracy = round(confusion_matrix$overall['Accuracy'], digits = 2)
+  sensitivity0 = round(confusion_matrix$byClass['Class: 0', 'Sensitivity'], digits = 2)
+  specificity0 = round(confusion_matrix$byClass['Class: 0', 'Specificity'], digits = 2)
+  balanced_accuracy0 = round(confusion_matrix$byClass['Class: 0', 'Balanced Accuracy'], digits = 2)
+
+  sensitivity1 = round(confusion_matrix$byClass['Class: 1', 'Sensitivity'], digits = 2)
+  specificity1 = round(confusion_matrix$byClass['Class: 1', 'Specificity'], digits = 2)
+  balanced_accuracy1 = round(confusion_matrix$byClass['Class: 1', 'Balanced Accuracy'], digits = 2)
+
+  sensitivity2 = round(confusion_matrix$byClass['Class: 2', 'Sensitivity'], digits = 2)
+  specificity2 = round(confusion_matrix$byClass['Class: 2', 'Specificity'], digits = 2)
+  balanced_accuracy2 = round(confusion_matrix$byClass['Class: 2', 'Balanced Accuracy'], digits = 2)
+
+  sensitivity3 = round(confusion_matrix$byClass['Class: 3', 'Sensitivity'], digits = 2)
+  specificity3 = round(confusion_matrix$byClass['Class: 3', 'Specificity'], digits = 2)
+  balanced_accuracy3 = round(confusion_matrix$byClass['Class: 3', 'Balanced Accuracy'], digits = 2)
+
+  print(paste0("Batch size: ", n))
+  print(paste0("Time taken to train neural network: ", time, "(seconds)"))
+  print(paste0("Overall accuarcy: ", accuracy))
+  print(paste0("Class 0: Sens. = ", sensitivity0, " Spec. = ", specificity0, " Bal.Acc. = ", balanced_accuracy0))
+  print(paste0("Class 1: Sens. = ", sensitivity1, " Spec. = ", specificity1, " Bal.Acc. = ", balanced_accuracy1))
+  print(paste0("Class 2: Sens. = ", sensitivity2, " Spec. = ", specificity2, " Bal.Acc. = ", balanced_accuracy2))
+  print(paste0("Class 3: Sens. = ", sensitivity3, " Spec. = ", specificity3, " Bal.Acc. = ", balanced_accuracy3))
+  model = NULL
+  model = create_model()
+}
+```
+
+### Part 2.1-C(i)
+```{r}
+print(paste0("I think that the time varies as you increase the batch size because batch size is the amount of data tensorflow take it, so the higher the batch size, the more data it takes which means it takes longer to do."))
+```
+
+### Part 2.1-C(ii)
+```{r}
+print(paste0("The overall accuracy decreases. The balanced accuracy decreases. The per-class statistics decreases. I think this happens because as batch size increases, the model gets updated less and less. This is because there is more data being used causing it to take longer, to limit the amount of time taken, the model gets updated less causing the model to be less accurate."))
+```
+
+### Part 2.1-D
+```{r}
+create_multi_model = function() {
+
+  multi_model = keras_model_sequential() %>%
+    layer_dense(units = 8, activation="relu", input_shape=c(3)) %>%
+    layer_dense(units = 7, activation = "relu") %>%
+    layer_dense(units = 4, activation="softmax")
+
+  multi_model %>% 
+    compile(loss = "categorical_crossentropy", 
+            optimizer = "adam", 
+            metrics = c("accuracy"))
+
+  return(multi_model)
+}
+
+multi_model = create_multi_model()
+
+multi_model %>% fit(
+  data.matrix(x_train), 
+  y_train.ohe,
+  epochs = 100,
+  batch_size = 1,
+  validation_split = 0.20,
+  verbose = 0
+)
+
+multi_model %>% evaluate(as.matrix(x_test), y_test.ohe)
+predicted_probability = predict(multi_model, as.matrix(x_test))
+predicted_class = apply(predicted_probability, 1, function(x) which.max(x)-1)
+multi_confusion_matrix = confusionMatrix(as.factor(predicted_class), as.factor(y_test))
+multi_confusion_matrix
+```
+
+### Part 2.1-D(i)
+```{r}
+accuracy = round(multi_confusion_matrix$overall['Accuracy'], digits = 2)
+print(paste0("Overall accuarcy: ", accuracy))
+```
+
+### Part 2.1-D(ii)
+```{r}
+sensitivity0 = round(multi_confusion_matrix$byClass['Class: 0', 'Sensitivity'], digits = 2)
+specificity0 = round(multi_confusion_matrix$byClass['Class: 0', 'Specificity'], digits = 2)
+balanced_accuracy0 = round(multi_confusion_matrix$byClass['Class: 0', 'Balanced Accuracy'], digits = 2)
+
+sensitivity1 = round(multi_confusion_matrix$byClass['Class: 1', 'Sensitivity'], digits = 2)
+specificity1 = round(multi_confusion_matrix$byClass['Class: 1', 'Specificity'], digits = 2)
+balanced_accuracy1 = round(multi_confusion_matrix$byClass['Class: 1', 'Balanced Accuracy'], digits = 2)
+
+sensitivity2 = round(multi_confusion_matrix$byClass['Class: 2', 'Sensitivity'], digits = 2)
+specificity2 = round(multi_confusion_matrix$byClass['Class: 2', 'Specificity'], digits = 2)
+balanced_accuracy2 = round(multi_confusion_matrix$byClass['Class: 2', 'Balanced Accuracy'], digits = 2)
+
+sensitivity3 = round(multi_confusion_matrix$byClass['Class: 3', 'Sensitivity'], digits = 2)
+specificity3 = round(multi_confusion_matrix$byClass['Class: 3', 'Specificity'], digits = 2)
+balanced_accuracy3 = round(multi_confusion_matrix$byClass['Class: 3', 'Balanced Accuracy'], digits = 2)
+
+print(paste0("Class 0: Sens. = ", sensitivity0, " Spec. = ", specificity0, " Bal.Acc. = ", balanced_accuracy0))
+print(paste0("Class 1: Sens. = ", sensitivity1, " Spec. = ", specificity1, " Bal.Acc. = ", balanced_accuracy1))
+print(paste0("Class 2: Sens. = ", sensitivity2, " Spec. = ", specificity2, " Bal.Acc. = ", balanced_accuracy2))
+print(paste0("Class 3: Sens. = ", sensitivity3, " Spec. = ", specificity3, " Bal.Acc. = ", balanced_accuracy3))
+```
+
+### Part 2.1-D(ii)
+```{r}
+print("The accuracy, sensitivity, specificity, and balanced accuracy of the model all stayed relatviely the same as we added the second hidden network.")
+```
