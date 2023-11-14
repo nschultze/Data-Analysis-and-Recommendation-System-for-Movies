@@ -1,2 +1,2 @@
 # CS-422-Data-Mining
-Github repository for CS 422 Data Mining
+This repository encompasses all CS442 - Machine Learning for Data Analysis coursework at the Illinois Institute of Technology. It features assignments covering diverse machine learning topics completed throughout the semester. Of particular note is the Extra Credit Assignment, a comprehensive exploration of Association Rule Mining and the implementation of a collaborative filtering-based movie recommendation system. This extra credit project involved comprehensive data analysis on diverse movie transaction datasets. The project executed collaborative filtering strategies to formulate personalized movie recommendations based on user preferences and movie ratings.
